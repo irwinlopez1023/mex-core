@@ -1,0 +1,35 @@
+{
+    "name": "irwinlopez1023/mex-core",
+    "description": "Librería PHP para la normalización y conversión de los 32 estados de la República Mexicana. Soporta CURP (18 caracteres), ID numérico (1-32), abreviaturas y nombres completos, con interfaz fluida.",
+    "type": "library",
+    "license": "MIT",
+    "version": "1.0.0",
+    "keywords": [
+        "mexico",
+        "estados",
+        "curp",
+        "ine",
+        "renapo",
+        "mexican-states",
+        "norma",
+        "mx"
+    ],
+    "authors": [
+        {
+            "name": "Irwin Lopez",
+            "email": "irwinlopez1023@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=8.0",
+        "ext-mbstring": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Irwinlopez1023\\MexCore\\": "src/"
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
