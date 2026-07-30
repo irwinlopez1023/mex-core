@@ -1,105 +1,257 @@
 <?php
-require_once __DIR__ . '/vendor/autoload.php';
 
+declare(strict_types=1);
+
+require_once __DIR__ . '/tests/harness.php';
+
+use Irwinlopez1023\MexCore\Curp;
 use Irwinlopez1023\MexCore\MexCore;
+use Irwinlopez1023\MexCore\Persona;
 
-echo "==================================" . PHP_EOL;
-echo "  MexCore - Prueba de Personas" . PHP_EOL;
-echo "==================================" . PHP_EOL . PHP_EOL;
+/**
+ * Suite de aserciones para el area de Personas.
+ * Ejecutar con: php test_persona.php (o php test.php para las dos suites).
+ */
 
-$personas = [
-    ['Nombre simple',            'VARG740228HSPLSN07', 'JUAN CARLOS',        'VALENCIA', 'RAMIREZ'],
-    ['Con conector DEL',         'HEGG560427MVZRRL04', 'MARIA DEL ROCIO',    'HERNANDEZ', 'GOMEZ'],
-    ['Con conector DE JESUS',    'MORL850912HDFRRN05', 'JOSE DE JESUS',      'MORALES',  'RIVERA'],
-    ['Con conector DE LOS',      'GODE561231HASLRN09', 'MARIA DE LOS ANGELES', 'GONZALEZ', 'DE LA CRUZ'],
-    ['Nombre unico',             'CCCC000101HCCXXX00', 'MARIA',              'SANTOS',   'PEREZ'],
-    ['Abreviatura MA. (con punto)', 'AAAA000101HBCXXX00', 'MA. GUADALUPE',   'TORRES',  'FLORES'],
-    ['Abreviatura J. (sin punto)',  'BBBB000101HBSXXX00', 'J. CONCEPCION',   'MENDOZA', 'SANCHEZ', false],
-    ['Extranjero',               'EXTR000101HNEXXX00', 'PEDRO MIGUEL',       'LOPEZ',    'MARTINEZ'],
-    ['Apellido con conector',    'JIML921015HNLNRS03', 'LUIS ALBERTO',       'JIMENEZ',  'LOPEZ'],
-];
+suite('Personas');
 
-echo "1. PROCESAMIENTO DE NOMBRES (logica de pegamento)" . PHP_EOL;
-echo "------------------------------------------------------" . PHP_EOL;
-
-foreach ($personas as $datos) {
-    $descripcion = $datos[0];
-    $curp        = $datos[1];
-    $nombres     = $datos[2];
-    $paterno     = $datos[3];
-    $materno     = $datos[4];
-    $mantener    = $datos[5] ?? true;
-
-    $p = MexCore::Persona()->fromData($curp, $nombres, $paterno, $materno, $mantener);
-
-    echo "  Caso: {$descripcion}" . PHP_EOL;
-    echo "    CURP:          {$p->toCurp()}" . PHP_EOL;
-    echo "    Primer nombre: {$p->toPrimerNombre()}" . PHP_EOL;
-    echo "    Segundo nom:   {$p->toSegundoNombre()}" . PHP_EOL;
-    echo "    Paterno:       {$p->toPrimerApellido()}" . PHP_EOL;
-    echo "    Materno:       {$p->toSegundoApellido()}" . PHP_EOL;
-    echo "    Completo:      {$p->toNombreCompleto()}" . PHP_EOL;
-    echo "" . PHP_EOL;
+function personaDe(string $nombres, bool $mantenerPunto = true): Persona
+{
+    return MexCore::Persona()->fromData('VARG740228HSPLSN07', $nombres, 'VALENCIA', 'RAMIREZ', $mantenerPunto);
 }
 
-// ─── 2. INTERFAZ FLUIDA y toArray ──────────────────────────────────
+function partir(string $nombres, bool $mantenerPunto = true): array
+{
+    $p = personaDe($nombres, $mantenerPunto);
 
-echo "2. INTERFAZ FLUIDA" . PHP_EOL;
-echo "--------------------------------------------" . PHP_EOL;
+    return [$p->toPrimerNombre(), $p->toSegundoNombre()];
+}
 
-$p = MexCore::Persona()->fromData('VARG740228HSPLSN07', 'JUAN CARLOS', 'VALENCIA', 'RAMIREZ');
+// --- 1. Regla de negocio intocable -----------------------------------
 
-echo "  toPrimerNombre()    =>  " . $p->toPrimerNombre() . PHP_EOL;
-echo "  toSegundoNombre()   =>  " . $p->toSegundoNombre() . PHP_EOL;
-echo "  toPrimerApellido()  =>  " . $p->toPrimerApellido() . PHP_EOL;
-echo "  toSegundoApellido() =>  " . $p->toSegundoApellido() . PHP_EOL;
-echo "  toNombreCompleto()  =>  " . $p->toNombreCompleto() . PHP_EOL;
-echo "  toArray():" . PHP_EOL;
-print_r($p->toArray());
+$intocables = [
+    ['MARIA DEL ROCIO',           ['MARIA DEL ROCIO', '']],
+    ['JUAN CARLOS DE JESUS',      ['JUAN', 'CARLOS DE JESUS']],
+    ['MARIA DEL ROCIO ALEJANDRA', ['MARIA DEL ROCIO', 'ALEJANDRA']],
+    ['MA. DE LOS ANGELES',        ['MA. DE LOS ANGELES', '']],
+    ['JOSE DE JESUS',             ['JOSE DE JESUS', '']],
+    ['JUAN CARLOS',               ['JUAN', 'CARLOS']],
+    ['MARIA',                     ['MARIA', '']],
+];
 
-// ─── 3. toNombreUnico Y combinar ──────────────────────────────────
+foreach ($intocables as $caso) {
+    check("[intocable] {$caso[0]}", $caso[1], partir($caso[0]));
+}
 
-echo "3. toNombreUnico() y combinar()" . PHP_EOL;
-echo "   Para cuando el sistema separo incorrectamente los nombres" . PHP_EOL;
-echo "---------------------------------------------------------------" . PHP_EOL;
+// --- 2. Fix: un segundo grupo de conectores abre bloque nuevo ---------
 
-$p1 = MexCore::Persona()->fromData('AAAA000101HBCXXX00', 'MA. GUADALUPE', 'TORRES', 'FLORES');
-echo "  Original:" . PHP_EOL;
-echo "    Primer nombre: {$p1->toPrimerNombre()}" . PHP_EOL;
-echo "    Segundo nombre: {$p1->toSegundoNombre()}" . PHP_EOL;
-echo "  toNombreUnico(): {$p1->toNombreUnico()}" . PHP_EOL;
+check('[fix conectores] MARIA DE LA LUZ DEL CARMEN', ['MARIA DE LA LUZ', 'DEL CARMEN'], partir('MARIA DE LA LUZ DEL CARMEN'));
+check('[fix conectores] MARIA DE LOS ANGELES DE LA CRUZ', ['MARIA DE LOS ANGELES', 'DE LA CRUZ'], partir('MARIA DE LOS ANGELES DE LA CRUZ'));
 
-$combinada = $p1->combinar();
-echo "  Despues de combinar():" . PHP_EOL;
-echo "    Primer nombre: {$combinada->toPrimerNombre()}" . PHP_EOL;
-echo "    Segundo nombre: {$combinada->toSegundoNombre()}" . PHP_EOL;
-echo "    Completo: {$combinada->toNombreCompleto()}" . PHP_EOL;
-echo "" . PHP_EOL;
+// --- 3. Fix: las abreviaturas pegan hacia adelante --------------------
 
-$p2 = MexCore::Persona()->fromData('VARG740228HSPLSN07', 'JUAN CARLOS', 'VALENCIA', 'RAMIREZ');
-echo "  toNombreUnico() con dos nombres reales: {$p2->toNombreUnico()}" . PHP_EOL;
-echo "  toNombreUnico() con nombre simple: "
-    . MexCore::Persona()->fromData('CCCC000101HCCXXX00', 'MARIA', 'SANTOS', 'PEREZ')->toNombreUnico() . PHP_EOL;
+check('[abrev] J. JESUS', ['J. JESUS', ''], partir('J. JESUS'));
+check('[abrev] MA GUADALUPE', ['MA GUADALUPE', ''], partir('MA GUADALUPE'));
+check('[abrev] MA. GUADALUPE ALEJANDRA', ['MA. GUADALUPE', 'ALEJANDRA'], partir('MA. GUADALUPE ALEJANDRA'));
+check('[abrev] MA. GUADALUPE DE JESUS', ['MA. GUADALUPE', 'DE JESUS'], partir('MA. GUADALUPE DE JESUS'));
+check('[abrev] GPE MARTIN', ['GPE MARTIN', ''], partir('GPE MARTIN'));
+check('[abrev] R JESUS', ['R JESUS', ''], partir('R JESUS'));
+// Una abreviatura no pega hacia atras: JOSE queda como primer nombre.
+check('[abrev] JOSE MA. DEL CARMEN', ['JOSE', 'MA. DEL CARMEN'], partir('JOSE MA. DEL CARMEN'));
+check('[abrev] sin punto J CONCEPCION', ['J CONCEPCION', ''], partir('J. CONCEPCION', false));
+check('[abrev] con punto J. CONCEPCION', ['J. CONCEPCION', ''], partir('J. CONCEPCION'));
 
-// ─── 4. INTEGRACION CON ESTADO (toEstado) ──────────────────────────
+// --- 4. Fix: pegamento colgante y basura de entrada -------------------
 
-echo "4. INTEGRACION CON ESTADO (toEstado)" . PHP_EOL;
-echo "--------------------------------------------" . PHP_EOL;
+check('[colgante] MARIA DE', ['MARIA', ''], partir('MARIA DE'));
+check('[colgante] JUAN CARLOS DE', ['JUAN', 'CARLOS'], partir('JUAN CARLOS DE'));
+check('[basura] solo conectores DE LA', ['DE LA', ''], partir('DE LA'));
+check('[basura] vacio', ['', ''], partir(''));
+check('[basura] solo espacios', ['', ''], partir('   '));
 
-$p = MexCore::Persona()->fromData('VARG740228HSPLSN07', 'JUAN CARLOS', 'VALENCIA', 'RAMIREZ');
-$e = $p->toEstado();
+// --- 5. Fix: normalizacion de separadores ----------------------------
 
-echo "  Persona: {$p->toNombreCompleto()}" . PHP_EOL;
-echo "  Estado via toEstado():" . PHP_EOL;
-echo "    ->toName()     =>  {$e->toName()}" . PHP_EOL;
-echo "    ->toAbbr()     =>  {$e->toAbbr()}" . PHP_EOL;
-echo "    ->toNumber()   =>  {$e->toNumber()}" . PHP_EOL;
-echo "    ->toCurp()     =>  {$e->toCurp()}" . PHP_EOL;
+check('[norm] espacios multiples', ['MARIA DEL ROCIO', ''], partir('MARIA  DEL   ROCIO'));
+check('[norm] tab y salto de linea', ['MARIA DEL ROCIO', ''], partir("MARIA\tDEL\nROCIO"));
+check('[norm] espacio duro U+00A0', ['MARIA DEL ROCIO', ''], partir("MARIA\u{00A0}DEL ROCIO"));
+check('[norm] minusculas', ['MARIA DEL ROCIO', ''], partir('maria del rocio'));
+check('[norm] recorte externo', ['MARIA DEL ROCIO', ''], partir('   MARIA DEL ROCIO   '));
 
-echo PHP_EOL . "  Fluent completo:" . PHP_EOL;
-echo "  MexCore::Persona()->fromData(...)->toEstado()->toAbbr()" . PHP_EOL;
-echo "    =>  " . MexCore::Persona()->fromData('VARG740228HSPLSN07', 'JUAN CARLOS', 'VALENCIA', 'RAMIREZ')->toEstado()->toAbbr() . PHP_EOL;
+// --- 6. Comportamiento preservado ------------------------------------
 
-echo PHP_EOL . "==================================" . PHP_EOL;
-echo "  Prueba de Personas - Completa" . PHP_EOL;
-echo "==================================" . PHP_EOL;
+check('[ok] MARIA Y JOSE', ['MARIA Y JOSE', ''], partir('MARIA Y JOSE'));
+check('[ok] LUZ MARIA DE LOURDES', ['LUZ', 'MARIA DE LOURDES'], partir('LUZ MARIA DE LOURDES'));
+check('[ok] MC DONALD', ['MC DONALD', ''], partir('MC DONALD'));
+check('[ok] VAN GOGH', ['VAN GOGH', ''], partir('VAN GOGH'));
+check('[ok] DE JESUS', ['DE JESUS', ''], partir('DE JESUS'));
+check('[ok] tres nombres', ['JUAN', 'CARLOS ALBERTO'], partir('JUAN CARLOS ALBERTO'));
+
+// --- 7. toNombres(): no se pierde el tercer nombre -------------------
+
+check('[toNombres] tres bloques', ['JUAN', 'CARLOS', 'ALBERTO'], personaDe('JUAN CARLOS ALBERTO')->toNombres());
+check('[toNombres] bloque compuesto', ['MARIA DEL ROCIO', 'ALEJANDRA'], personaDe('MARIA DEL ROCIO ALEJANDRA')->toNombres());
+check('[separarNombres] acceso directo', ['MARIA DE LA LUZ', 'DEL CARMEN'], MexCore::Persona()->separarNombres('MARIA DE LA LUZ DEL CARMEN'));
+
+// --- 8. combinar() / separar() / estaCombinado() ---------------------
+
+$p = personaDe('JUAN CARLOS');
+$c = $p->combinar();
+
+check('[combinar] primerNombre', 'JUAN CARLOS', $c->toPrimerNombre());
+check('[combinar] segundoNombre', '', $c->toSegundoNombre());
+check('[combinar] estaCombinado', true, $c->estaCombinado());
+check('[combinar] no muta el origen', 'JUAN', $p->toPrimerNombre());
+check('[combinar] nombre completo', 'JUAN CARLOS VALENCIA RAMIREZ', $c->toNombreCompleto());
+check('[separar] es reversible', true, $c->separar()->equals($p));
+check('[separar] idempotente', true, $p->separar()->equals($p));
+check('[combinar] nombre simple', true, personaDe('MARIA')->combinar()->equals(personaDe('MARIA')));
+check('[toNombreUnico] simple', 'MARIA', personaDe('MARIA')->toNombreUnico());
+check('[toNombreUnico] doble', 'JUAN CARLOS', $p->toNombreUnico());
+
+// --- 9. Salidas de formato -------------------------------------------
+
+check('[formato] invertido', 'VALENCIA RAMIREZ, JUAN CARLOS', $p->toNombreCompletoInvertido());
+check('[formato] iniciales', 'JCVR', $p->toIniciales());
+check('[formato] iniciales con bloque compuesto', 'MAVR', personaDe('MARIA DEL ROCIO ALEJANDRA')->toIniciales());
+check('[formato] toArray', [
+    'curp'            => 'VARG740228HSPLSN07',
+    'primerNombre'    => 'JUAN',
+    'segundoNombre'   => 'CARLOS',
+    'primerApellido'  => 'VALENCIA',
+    'segundoApellido' => 'RAMIREZ',
+], $p->toArray());
+check('[formato] json', $p->toArray(), json_decode(json_encode($p), true));
+
+// --- 10. Apellidos: normalizacion -----------------------------------
+
+$ap = MexCore::Persona()->fromData('GODE561231HASLRN09', 'MARIA', '  gonzalez ', "DE\u{00A0}LA   CRUZ");
+check('[apellidos] paterno normalizado', 'GONZALEZ', $ap->toPrimerApellido());
+check('[apellidos] materno normalizado', 'DE LA CRUZ', $ap->toSegundoApellido());
+
+// --- 11. fromArray(): evita invertir apellidos ----------------------
+
+$fa = MexCore::Persona()->fromArray([
+    'curp'            => 'HEGG560427MVZRRL04',
+    'nombres'         => 'MARIA DEL ROCIO',
+    'primerApellido'  => 'HERNANDEZ',
+    'segundoApellido' => 'GOMEZ',
+]);
+check('[fromArray] equivale a fromData', true, $fa->equals(
+    MexCore::Persona()->fromData('HEGG560427MVZRRL04', 'MARIA DEL ROCIO', 'HERNANDEZ', 'GOMEZ')
+));
+check('[fromArray] defaults', ['', ''], [
+    MexCore::Persona()->fromArray([])->toCurp(),
+    MexCore::Persona()->fromArray([])->toPrimerNombre(),
+]);
+
+// --- 12. Diccionarios configurables ---------------------------------
+
+$sinConectores = MexCore::Persona()->withConectores([]);
+$x = $sinConectores->fromData('VARG740228HSPLSN07', 'MARIA DEL ROCIO', 'VALENCIA', 'RAMIREZ');
+check('[config] sin conectores separa normal', ['MARIA', 'DEL ROCIO'], [$x->toPrimerNombre(), $x->toSegundoNombre()]);
+check('[config] no contamina la instancia base', ['MARIA DEL ROCIO', ''], partir('MARIA DEL ROCIO'));
+
+// --- 13. CURP derivada ----------------------------------------------
+
+$curp = MexCore::Persona()->fromData('HEGG560427MVZRRL04', 'MARIA DEL ROCIO', 'HERNANDEZ', 'GOMEZ');
+
+check('[curp] sexo', 'M', $curp->toSexo());
+check('[curp] fecha', '1956-04-27', $curp->toFechaNacimiento() ? $curp->toFechaNacimiento()->format('Y-m-d') : null);
+check('[curp] estado', 'Veracruz', $curp->toEstado()->toName());
+check('[curp] estructura valida', true, $curp->tieneCurpValida());
+check('[curp] edad con referencia', 68, $curp->toEdad(new DateTimeImmutable('2025-01-01')));
+
+// Homoclave con letra (posicion 17) => nacido en el siglo 2000.
+$siglo21 = MexCore::Persona()->fromData('LOPJ050310HDFPRNA9', 'JUAN', 'LOPEZ', 'PEREZ');
+check('[curp] siglo 2000', '2005-03-10', $siglo21->toFechaNacimiento() ? $siglo21->toFechaNacimiento()->format('Y-m-d') : null);
+check('[curp] sexo H', 'H', $siglo21->toSexo());
+
+$malFormada = MexCore::Persona()->fromData('LOPE050310HDF PRNA9', 'JUAN', 'LOPEZ', 'PEREZ');
+check('[curp] mal formada', false, $malFormada->tieneCurpValida());
+
+check('[curp] fecha inexistente', null, MexCore::Persona()
+    ->fromData('LOPJ050231HDFPRNA9', 'JUAN', 'LOPEZ', 'PEREZ')
+    ->toFechaNacimiento());
+check('[curp] vacia -> sexo', '', MexCore::Persona()->fromData('', 'JUAN', 'LOPEZ', 'PEREZ')->toSexo());
+check('[curp] vacia -> fecha', null, MexCore::Persona()->fromData('', 'JUAN', 'LOPEZ', 'PEREZ')->toFechaNacimiento());
+check('[curp] estado inexistente', false, MexCore::Persona()->fromData('LOPJ050310HZZPRNA9', 'JUAN', 'LOPEZ', 'PEREZ')->tieneCurpValida());
+
+// --- 14. CURPs reales: digito verificador y validacion cruzada -------
+
+// Cada caso: CURP, nombres, paterno, materno, sexo, fecha, estado, y si la
+// inversion de apellidos es detectable (no lo es cuando ambos son iguales).
+$reales = [
+    ['SOSR650222MPLSNC03', 'MARIA DEL ROCIO',  'SOSA',      'SANCHEZ',   'M', '1965-02-22', 'Puebla',           true],
+    ['MEST591010MQTNNR15', 'MA. TERESA PABLA', 'MENDEZ',    'SANCHEZ',   'M', '1959-10-10', 'Querétaro',        true],
+    ['LUHR991216MPLZRC00', 'ROCIO',            'DE LA LUZ', 'HERNANDEZ', 'M', '1999-12-16', 'Puebla',           true],
+    ['PEIA620825HCSRCN02', 'ANDRES',           'PEREZ',     'ICH',       'H', '1962-08-25', 'Chiapas',          true],
+    ['TEMC930414MMCNNH05', 'CHEEL ICH',        'TENORIO',   'MENDOZA',   'M', '1993-04-14', 'Michoacán',        true],
+    ['OEAI750827MMSVRC06', 'MA. ICH-CHEL',     'OVELIZ',    'ARANDA',    'M', '1975-08-27', 'Estado de México', true],
+    ['BABA940526HHGCCB07', 'ABRAHAM',          'BACA',      'BACA',      'H', '1994-05-26', 'Hidalgo',          false],
+    ['VEBS940210MCHGCH04', 'SAHIRA YANIRA',    'VEGA',      'BACA',      'M', '1994-02-10', 'Chihuahua',        true],
+    // OJO: el homoclave de esta CURP es '0', un digito, asi que la norma la
+    // manda al siglo XX: 1909, no 2009. Prefijo, consonantes y digito
+    // verificador son correctos, pero conviene confirmar la fecha real.
+    ['LOID091215MCSPCM00', 'DOMINGA',          'LOPEZ',     'ICH',       'M', '1909-12-15', 'Chiapas',          true],
+];
+
+foreach ($reales as $r) {
+    [$curpReal, $nom, $pat, $mat, $sexo, $fechaEsperada, $estadoEsperado, $detectable] = $r;
+
+    $pr = MexCore::Persona()->fromData($curpReal, $nom, $pat, $mat);
+
+    check("[real {$curpReal}] digito verificador", substr($curpReal, 17), $pr->toDigitoVerificador());
+    check("[real {$curpReal}] curp valida", true, $pr->tieneCurpValida());
+    check("[real {$curpReal}] coincide con nombres", true, $pr->coincideConCurp());
+    check("[real {$curpReal}] sexo", $sexo, $pr->toSexo());
+    check("[real {$curpReal}] fecha", $fechaEsperada, $pr->toFechaNacimiento()->format('Y-m-d'));
+    check("[real {$curpReal}] estado", $estadoEsperado, $pr->toEstado()->toName());
+
+    // Apellidos invertidos: la validacion cruzada debe detectarlo.
+    if ($detectable) {
+        $invertido = MexCore::Persona()->fromData($curpReal, $nom, $mat, $pat);
+        check("[real {$curpReal}] detecta apellidos invertidos", false, $invertido->coincideConCurp());
+    }
+}
+
+// RENAPO omite MARIA/JOSE cuando hay un nombre posterior: SOSR viene de ROCIO,
+// no de MARIA, y MEST viene de TERESA, no de MA.
+check('[renapo] prefijo omite MARIA', 'SOSR', Curp::prefijoDesde('MARIA DEL ROCIO', 'SOSA', 'SANCHEZ'));
+check('[renapo] prefijo omite MA.', 'MEST', Curp::prefijoDesde('MA. TERESA PABLA', 'MENDEZ', 'SANCHEZ'));
+check('[renapo] particulas del apellido', 'LUHR', Curp::prefijoDesde('ROCIO', 'DE LA LUZ', 'HERNANDEZ'));
+check('[renapo] nombre unico no se omite', 'SOSM', Curp::prefijoDesde('MARIA', 'SOSA', 'SANCHEZ'));
+check('[renapo] consonantes', 'SNC', Curp::consonantesDesde('MARIA DEL ROCIO', 'SOSA', 'SANCHEZ'));
+check('[renapo] sin segundo apellido', 'X', substr(Curp::prefijoDesde('ROCIO', 'SOSA', ''), 2, 1));
+check('[renapo] digito con curp corta', '', Curp::digitoVerificador('SOSR65'));
+check('[renapo] digito ignora el 18o caracter', '3', Curp::digitoVerificador('SOSR650222MPLSNC09'));
+check('[renapo] curp con digito incorrecto', false, Curp::esValida('SOSR650222MPLSNC09'));
+
+// --- 15. Casos limite confirmados con CURPs reales -------------------
+
+// ICH no tiene vocal interna. Como segundo apellido solo aporta su inicial,
+// que es lo que confirma PEIA. Como primer apellido la posicion 2 cae en X.
+check('[limite] ICH como segundo apellido', 'PEIA', Curp::prefijoDesde('ANDRES', 'PEREZ', 'ICH'));
+check('[limite] ICH sin vocal interna', 'IXPA', Curp::prefijoDesde('ANDRES', 'ICH', 'PEREZ'));
+check('[limite] ICH consonante interna', 'C', substr(Curp::consonantesDesde('ANDRES', 'ICH', 'PEREZ'), 0, 1));
+
+// CHEEL no es MARIA ni JOSE, asi que el primer nombre no se omite aunque
+// haya un segundo. El prefijo termina en C, no en I de ICH.
+check('[limite] primer nombre no omitido', 'TEMC', Curp::prefijoDesde('CHEEL ICH', 'TENORIO', 'MENDOZA'));
+check('[limite] CHEEL bloques', ['CHEEL', 'ICH'], MexCore::Persona()->fromData('TEMC930414MMCNNH05', 'CHEEL ICH', 'TENORIO', 'MENDOZA')->toNombres());
+
+// El guion interno no debe romper la derivacion: MA. se omite y la letra
+// viene de ICH-CHEL.
+check('[limite] nombre con guion', 'OEAI', Curp::prefijoDesde('MA. ICH-CHEL', 'OVELIZ', 'ARANDA'));
+check('[limite] guion consonante interna', 'C', substr(Curp::consonantesDesde('MA. ICH-CHEL', 'OVELIZ', 'ARANDA'), 2, 1));
+check('[limite] MA. pega hacia adelante con guion', 'MA. ICH-CHEL', MexCore::Persona()->fromData('OEAI750827MMSVRC06', 'MA. ICH-CHEL', 'OVELIZ', 'ARANDA')->toPrimerNombre());
+
+// BABA no esta en la lista de palabras inconvenientes y la CURP real lo
+// confirma: no hay sustitucion por X. BACA si esta, y ahi si sustituye.
+check('[limite] BABA no es inconveniente', 'BABA', Curp::prefijoDesde('ABRAHAM', 'BACA', 'BACA'));
+check('[limite] BACA si es inconveniente', 'BXCA', Curp::prefijoDesde('ANA', 'BACA', 'CRUZ'));
+
+// Apellidos identicos: la inversion es indetectable por construccion.
+$babaOk  = MexCore::Persona()->fromData('BABA940526HHGCCB07', 'ABRAHAM', 'BACA', 'BACA');
+check('[limite] apellidos identicos coinciden', true, $babaOk->coincideConCurp());
+
+cerrarSuite();
