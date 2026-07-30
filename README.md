@@ -1,8 +1,8 @@
 # MexCore
 
-Librería PHP para la normalización y conversión de los **32 estados de la República Mexicana** más **Nacido en el Extranjero**.
+Librería PHP para la normalización y conversión de los **32 estados de la República Mexicana** más **Nacido en el Extranjero**, y procesamiento inteligente de **nombres de personas mexicanas** a partir de datos crudos del INE.
 
-Acepta identificadores en cualquier formato (CURP completa de 18 caracteres, código CURP de 2 letras, ID numérico, abreviatura, nombre completo) y los convierte a cualquier otro formato mediante una **interfaz fluida** (Fluent Interface).
+API intuitiva con dos puntos de entrada: `MexCore::Estado()` y `MexCore::Persona()`.
 
 ## Requisitos
 
@@ -15,74 +15,145 @@ Acepta identificadores en cualquier formato (CURP completa de 18 caracteres, có
 composer require irwinlopez1023/mex-core
 ```
 
-## Uso básico
+---
 
-### Named constructors (entrada)
+## MexCore::Estado()
+
+Acepta identificadores de estado en cualquier formato y los convierte a cualquier otro formato.
+
+### Named constructors
 
 ```php
 use Irwinlopez1023\MexCore\MexCore;
 
-// Desde CURP completa (18 caracteres)
-$estado = MexCore::fromCurp('HEGG560427MVZRRL04');
-
-// Desde código CURP de 2 letras
-$estado = MexCore::fromCurp('SP');
-
-// Desde ID numérico (1-33)
-$estado = MexCore::fromNumber(24);
-
-// Desde abreviatura
-$estado = MexCore::fromAbbr('SLP');
-
-// Desde nombre completo
-$estado = MexCore::fromName('San Luis Potosí');
+$estado = MexCore::Estado()->fromCurp('HEGG560427MVZRRL04');
+$estado = MexCore::Estado()->fromCurp('SP');
+$estado = MexCore::Estado()->fromNumber(24);
+$estado = MexCore::Estado()->fromAbbr('SLP');
+$estado = MexCore::Estado()->fromName('San Luis Potosí');
 ```
 
-### Fluent Interface (salida)
+### Salida
 
 ```php
-echo MexCore::fromCurp('VARG740228HSPLSN07')->toName();     // San Luis Potosí
-echo MexCore::fromNumber(9)->toCurp();                       // DF
-echo MexCore::fromAbbr('CDMX')->toNumber();                  // 9
-echo MexCore::fromName('Nuevo León')->toAbbr();              // NL
-echo MexCore::fromName('Nuevo León')->toCurp();              // NL
+echo $estado->toNumber(); // 24
+echo $estado->toCurp();   // SP
+echo $estado->toAbbr();   // SLP
+echo $estado->toName();   // San Luis Potosí
 ```
 
-### Todo en una línea
+### Fluent Interface
 
 ```php
-$curp = MexCore::fromName('Nuevo León')->toCurp();    // "NL"
-$num  = MexCore::fromAbbr('CDMX')->toNumber();        // 9
-$abbr = MexCore::fromCurp('GODE561231HASLRN09')->toAbbr(); // "AGS"
+$abbr = MexCore::Estado()->fromName('Nuevo León')->toAbbr(); // NL
+$num  = MexCore::Estado()->fromAbbr('CDMX')->toNumber();     // 9
+$name = MexCore::Estado()->fromCurp('VARG740228HSPLSN07')->toName(); // San Luis Potosí
 ```
 
-## Resiliencia
-
-Los métodos de entrada normalizan automáticamente el texto:
+### Resiliencia
 
 | Entrada | Método | Resultado |
 |---|---|---|
 | `'S.L.P.'` | `fromAbbr()` | San Luis Potosí |
 | `'slp'` | `fromAbbr()` | San Luis Potosí |
 | `'san luis potosi'` | `fromName()` | San Luis Potosí |
-| `'NUEVO LEON'` | `fromName()` | Nuevo León |
 | `'Mexico'` | `fromName()` | Estado de México |
 | `'EDOMEX'` | `fromName()` | Estado de México |
-| `'DF'` | `fromName()` | Ciudad de México |
-| `'Distrito Federal'` | `fromName()` | Ciudad de México |
 | `'extranjero'` | `fromName()` | Nacido en el Extranjero |
 
-## CURP completa vs código de 2 letras
-
-`fromCurp()` acepta ambos formatos automáticamente:
+### Listar todos los estados
 
 ```php
-// CURP completa de 18 caracteres
-MexCore::fromCurp('HEGG560427MVZRRL04')->toName(); // Veracruz
-
-// Código de 2 letras
-MexCore::fromCurp('VZ')->toName(); // Veracruz
+foreach (MexCore::Estado()->listar() as $e) {
+    echo $e->toName();
+}
 ```
+
+---
+
+## MexCore::Persona()
+
+Procesa datos crudos (CURP, nombres, apellidos) y estructura los nombres aplicando la **lógica de pegamento** para nombres compuestos con conectores.
+
+### Named constructor
+
+```php
+$persona = MexCore::Persona()->fromData(
+    curp: 'VARG740228HSPLSN07',
+    nombres: 'JUAN CARLOS',
+    primerApellido: 'VALENCIA',
+    segundoApellido: 'RAMIREZ',
+);
+```
+
+### Salida
+
+```php
+echo $persona->toPrimerNombre();    // JUAN
+echo $persona->toSegundoNombre();   // CARLOS
+echo $persona->toPrimerApellido();  // VALENCIA
+echo $persona->toSegundoApellido(); // RAMIREZ
+echo $persona->toNombreCompleto();  // JUAN CARLOS VALENCIA RAMIREZ
+echo $persona->toCurp();            // VARG740228HSPLSN07
+print_r($persona->toArray());
+```
+
+### Integración con Estado
+
+```php
+$estado = $persona->toEstado();
+
+echo $estado->toName();   // San Luis Potosí
+echo $estado->toAbbr();   // SLP
+echo $estado->toNumber(); // 24
+echo $estado->toCurp();   // SP
+
+// Todo en una línea
+MexCore::Persona()->fromData('VARG740228HSPLSN07', 'JUAN CARLOS', 'VALENCIA', 'RAMIREZ')
+    ->toEstado()
+    ->toAbbr(); // SLP
+```
+
+### toNombreUnico() y combinar()
+
+Cuando el sistema separa incorrectamente los nombres (como `MA. GUADALUPE`), puedes unirlos:
+
+```php
+$p = MexCore::Persona()->fromData('AAAA000101HBCXXX00', 'MA. GUADALUPE', 'TORRES', 'FLORES');
+
+// Obtener nombres unidos como string (sin modificar el objeto)
+echo $p->toNombreUnico(); // MA. GUADALUPE
+
+// Crear una nueva Persona con los nombres combinados
+$combinada = $p->combinar();
+echo $combinada->toPrimerNombre(); // MA. GUADALUPE
+echo $combinada->toSegundoNombre(); // (vacío)
+echo $combinada->toNombreCompleto(); // MA. GUADALUPE TORRES FLORES
+```
+
+### Lógica de pegamento (conectores)
+
+| Entrada | Primer nombre | Segundo nombre |
+|---|---|---|
+| `MARIA DEL ROCIO` | `MARIA DEL ROCIO` | _(vacío)_ |
+| `JOSE DE JESUS` | `JOSE DE JESUS` | _(vacío)_ |
+| `MARIA DE LOS ANGELES` | `MARIA DE LOS ANGELES` | _(vacío)_ |
+| `JUAN CARLOS` | `JUAN` | `CARLOS` |
+| `LUIS ALBERTO` | `LUIS` | `ALBERTO` |
+
+### Manejo de abreviaturas con punto
+
+```php
+// Con punto (por defecto)
+$p = MexCore::Persona()->fromData('AAAA000101HBCXXX00', 'MA. GUADALUPE', 'TORRES', 'FLORES');
+echo $p->toPrimerNombre(); // MA.
+
+// Sin punto
+$p = MexCore::Persona()->fromData('AAAA000101HBCXXX00', 'MA. GUADALUPE', 'TORRES', 'FLORES', mantenerPunto: false);
+echo $p->toPrimerNombre(); // MA
+```
+
+---
 
 ## Listado completo de estados
 
@@ -122,58 +193,66 @@ MexCore::fromCurp('VZ')->toName(); // Veracruz
 | 32 | ZS | ZAC | Zacatecas |
 | 33 | NE | EXT | Nacido en el Extranjero |
 
+---
+
 ## Excepciones
 
 ```php
 use Irwinlopez1023\MexCore\InvalidStateException;
 
 try {
-    MexCore::fromCurp('AAAA000101HZZXXX00');
+    MexCore::Estado()->fromCurp('AAAA000101HZZXXX00');
 } catch (InvalidStateException $e) {
-    echo $e->getMessage(); // "No se encontró un estado de México para: AAAA000101HZZXXX00"
+    echo $e->getMessage();
 }
 ```
 
-## Métodos disponibles
+---
 
-### Entrada (Named constructors)
+## API completa
 
-| Método | Descripción |
-|---|---|
-| `MexCore::fromCurp(string $curp)` | Acepta CURP de 18 caracteres o código de 2 letras |
-| `MexCore::fromNumber(int\|string $number)` | ID numérico del 1 al 33 |
-| `MexCore::fromAbbr(string $abbr)` | Abreviatura (tolera puntos, mayúsculas/minúsculas) |
-| `MexCore::fromName(string $name)` | Nombre completo (tolera acentos, mayúsculas/minúsculas) |
+### MexCore::Estado()
 
-### Salida
-
-| Método | Retorna | Ejemplo |
+| Método | Descripción | Retorno |
 |---|---|---|
-| `->toNumber()` | `int` | `24` |
-| `->toCurp()` | `string` | `"SP"` |
-| `->toAbbr()` | `string` | `"SLP"` |
-| `->toName()` | `string` | `"San Luis Potosí"` |
+| `->fromCurp(string $curp)` | CURP completa (18 chars) o código (2 letras) | `Estado` |
+| `->fromNumber(int\|string $number)` | ID numérico 1-33 | `Estado` |
+| `->fromAbbr(string $abbr)` | Abreviatura (tolera puntos, mayús/minús) | `Estado` |
+| `->fromName(string $name)` | Nombre completo (tolera acentos, mayús/minús) | `Estado` |
+| `->listar()` | Todos los estados | `Estado[]` |
+
+### Estado (value object)
+
+| Método | Retorna |
+|---|---|
+| `->toNumber()` | `int` |
+| `->toCurp()` | `string` |
+| `->toAbbr()` | `string` |
+| `->toName()` | `string` |
+
+### MexCore::Persona()
+
+| Método | Descripción | Retorno |
+|---|---|---|
+| `->fromData(curp, nombres, paterno, materno, mantenerPunto)` | Procesa datos crudos de persona | `Persona` |
+
+### Persona (value object)
+
+| Método | Retorna |
+|---|---|
+| `->toCurp()` | `string` (CURP completa) |
+| `->toPrimerNombre()` | `string` |
+| `->toSegundoNombre()` | `string` |
+| `->toPrimerApellido()` | `string` |
+| `->toSegundoApellido()` | `string` |
+| `->toNombreCompleto()` | `string` |
+| `->toNombreUnico()` | `string` (primerNombre + segundoNombre) |
+| `->combinar()` | `Persona` (nueva instancia con nombres fusionados) |
+| `->toArray()` | `array` |
+| `->toEstado()` | `Estado` |
+
+---
 
 ## Licencia
 
-MIT License
-
-Copyright (c) 2026 Irwin Lopez
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+MIT License — Copyright (c) 2024 Irwin Lopez
