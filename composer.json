@@ -3,7 +3,7 @@
     "description": "Librería PHP para la normalización y conversión de los 32 estados de la República Mexicana. Soporta CURP (18 caracteres), ID numérico (1-32), abreviaturas y nombres completos, con interfaz fluida.",
     "type": "library",
     "license": "MIT",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "keywords": [
         "mexico",
         "estados",
