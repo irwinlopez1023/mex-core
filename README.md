@@ -53,9 +53,53 @@ echo $estado->toNumero();            // 24
 echo $estado->toNumeroFormateado();  // 24  (y '09' para la CDMX)
 echo $estado->toCurp();              // SP
 echo $estado->toAbreviatura();       // SLP
+echo $estado->toIso();               // SLP
 echo $estado->toNombre();            // San Luis Potosí
 
 var_dump($estado->esExtranjero());   // false
+```
+
+### Abreviatura contra código ISO
+
+Son dos catálogos distintos y es importante no confundirlos.
+
+`toAbreviatura()` devuelve la abreviatura de uso común, y **tiene largo variable**: de dos letras (`BC`, `NL`, `QR`) a cinco (`TAMPS`). Sólo 22 de las 33 entidades tienen tres.
+
+`toIso()` devuelve el código **ISO 3166-2:MX, siempre de tres letras**: `BCN`, `NLE`, `ROO`, `TAM`, `CMX`. Es el que piden las APIs con un catálogo cerrado.
+
+```php
+$bc = MexCore::Estado()->fromCurp('XXXX000101HBCXXX00');
+
+$bc->toAbreviatura(); // 'BC'   <- dos letras, rompe una API que espera tres
+$bc->toIso();         // 'BCN'  <- ISO 3166-2:MX
+```
+
+Las 16 entidades donde los dos difieren:
+
+| Clave | Abreviatura | ISO | | Clave | Abreviatura | ISO |
+|---|---|---|---|---|---|---|
+| 1 | AGS | AGU | | 16 | MICH | MIC |
+| 2 | BC | **BCN** | | 19 | NL | **NLE** |
+| 4 | CAMP | CAM | | 22 | QRO | QUE |
+| 5 | COAH | COA | | 23 | QR | **ROO** |
+| 7 | CHIS | CHP | | 28 | TAMPS | **TAM** |
+| 8 | CHIH | CHH | | 29 | TLAX | TLA |
+| 9 | CDMX | **CMX** | | 33 | EXT | **NE** |
+| 10 | DGO | DUR | | 11 | GTO | GUA |
+| 13 | HGO | HID | | | | |
+
+La norma ISO sólo cubre las 32 entidades federativas. Para Nacido en el Extranjero se devuelve `NE`, que es el código que ya usa la CURP.
+
+El código ISO también sirve de entrada. `fromIso()` es estricto y sólo acepta el catálogo ISO; `fromAbreviatura()` y `desde()` aceptan las dos formas:
+
+```php
+MexCore::Estado()->fromIso('BCN')->toNumero();          // 2
+MexCore::Estado()->fromAbreviatura('BCN')->toNumero();  // 2
+MexCore::Estado()->desde('BCN')->toNumero();            // 2
+MexCore::Estado()->desde('BC')->toNumero();             // 2
+
+MexCore::Estado()->fromIso('BC');    // InvalidStateException
+MexCore::Estado()->fromIso('TAMPS'); // InvalidStateException
 ```
 
 ### Fluent Interface
@@ -123,10 +167,11 @@ MexCore::Estado()->fromNombre('Querétaro de Arteaga')->toNumero();            /
 $cdmx = MexCore::Estado()->fromNumero(9);
 
 $cdmx->toArray();
-// ['numero' => 9, 'nombre' => 'Ciudad de México', 'curp' => 'DF', 'abreviatura' => 'CDMX']
+// ['numero' => 9, 'nombre' => 'Ciudad de México', 'curp' => 'DF',
+//  'abreviatura' => 'CDMX', 'iso' => 'CMX']
 
 json_encode($cdmx);
-// {"numero":9,"nombre":"Ciudad de México","curp":"DF","abreviatura":"CDMX"}
+// {"numero":9,"nombre":"Ciudad de México","curp":"DF","abreviatura":"CDMX","iso":"CMX"}
 
 // equals() compara datos, no instancias: da igual por dónde entró.
 MexCore::Estado()->fromAbreviatura('SLP')->equals(MexCore::Estado()->fromNumero(24)); // true
@@ -380,43 +425,43 @@ Las tres reglas del instructivo están implementadas: se descartan las partícul
 
 ## Listado completo de estados
 
-| Clave | CURP | Abreviatura | Nombre |
-|---|---|---|---|
-| 1 | AS | AGS | Aguascalientes |
-| 2 | BC | BC | Baja California |
-| 3 | BS | BCS | Baja California Sur |
-| 4 | CC | CAMP | Campeche |
-| 5 | CL | COAH | Coahuila |
-| 6 | CM | COL | Colima |
-| 7 | CS | CHIS | Chiapas |
-| 8 | CH | CHIH | Chihuahua |
-| 9 | DF | CDMX | Ciudad de México |
-| 10 | DG | DGO | Durango |
-| 11 | GT | GTO | Guanajuato |
-| 12 | GR | GRO | Guerrero |
-| 13 | HG | HGO | Hidalgo |
-| 14 | JC | JAL | Jalisco |
-| 15 | MS | MEX | Estado de México |
-| 16 | MC | MICH | Michoacán |
-| 17 | MN | MOR | Morelos |
-| 18 | NT | NAY | Nayarit |
-| 19 | NL | NL | Nuevo León |
-| 20 | OC | OAX | Oaxaca |
-| 21 | PL | PUE | Puebla |
-| 22 | QT | QRO | Querétaro |
-| 23 | QR | QR | Quintana Roo |
-| 24 | SP | SLP | San Luis Potosí |
-| 25 | SL | SIN | Sinaloa |
-| 26 | SR | SON | Sonora |
-| 27 | TC | TAB | Tabasco |
-| 28 | TS | TAMPS | Tamaulipas |
-| 29 | TL | TLAX | Tlaxcala |
-| 30 | VZ | VER | Veracruz |
-| 31 | YN | YUC | Yucatán |
-| 32 | ZS | ZAC | Zacatecas |
-| 33 | NE | EXT | Nacido en el Extranjero |
+| Clave | CURP | Abreviatura | ISO | Nombre |
+|---|---|---|---|---|
+| 1 | AS | AGS | AGU | Aguascalientes |
+| 2 | BC | BC | BCN | Baja California |
+| 3 | BS | BCS | BCS | Baja California Sur |
+| 4 | CC | CAMP | CAM | Campeche |
+| 5 | CL | COAH | COA | Coahuila |
+| 6 | CM | COL | COL | Colima |
+| 7 | CS | CHIS | CHP | Chiapas |
+| 8 | CH | CHIH | CHH | Chihuahua |
+| 9 | DF | CDMX | CMX | Ciudad de México |
+| 10 | DG | DGO | DUR | Durango |
+| 11 | GT | GTO | GUA | Guanajuato |
+| 12 | GR | GRO | GRO | Guerrero |
+| 13 | HG | HGO | HID | Hidalgo |
+| 14 | JC | JAL | JAL | Jalisco |
+| 15 | MS | MEX | MEX | Estado de México |
+| 16 | MC | MICH | MIC | Michoacán |
+| 17 | MN | MOR | MOR | Morelos |
+| 18 | NT | NAY | NAY | Nayarit |
+| 19 | NL | NL | NLE | Nuevo León |
+| 20 | OC | OAX | OAX | Oaxaca |
+| 21 | PL | PUE | PUE | Puebla |
+| 22 | QT | QRO | QUE | Querétaro |
+| 23 | QR | QR | ROO | Quintana Roo |
+| 24 | SP | SLP | SLP | San Luis Potosí |
+| 25 | SL | SIN | SIN | Sinaloa |
+| 26 | SR | SON | SON | Sonora |
+| 27 | TC | TAB | TAB | Tabasco |
+| 28 | TS | TAMPS | TAM | Tamaulipas |
+| 29 | TL | TLAX | TLA | Tlaxcala |
+| 30 | VZ | VER | VER | Veracruz |
+| 31 | YN | YUC | YUC | Yucatán |
+| 32 | ZS | ZAC | ZAC | Zacatecas |
+| 33 | NE | EXT | NE | Nacido en el Extranjero |
 
-La clave es la del INEGI. El código de la CURP de la capital sigue siendo `DF`, aunque la entidad se llame Ciudad de México desde 2016.
+La clave es la del INEGI. El código de la CURP de la capital sigue siendo `DF`, aunque la entidad se llame Ciudad de México desde 2016. La columna ISO es [ISO 3166-2:MX](https://en.wikipedia.org/wiki/ISO_3166-2:MX), sin el prefijo `MX-`.
 
 ---
 
@@ -459,7 +504,8 @@ foreach ($renglones as $r) {
 |---|---|---|
 | `->fromCurp(string $curp)` | CURP completa (18 chars) o código (2 letras) | `Estado` |
 | `->fromNumero(int\|string $numero)` | Clave del INEGI 1-33, tolera `'09'` | `Estado` |
-| `->fromAbreviatura(string $abreviatura)` | Abreviatura (tolera puntos, espacios, mayús/minús) | `Estado` |
+| `->fromAbreviatura(string $abreviatura)` | Abreviatura de uso común o código ISO | `Estado` |
+| `->fromIso(string $iso)` | Sólo ISO 3166-2:MX (`BCN`, `TAM`), más `NE` | `Estado` |
 | `->fromNombre(string $nombre)` | Nombre corto u oficial (tolera acentos, mayús/minús) | `Estado` |
 | `->desde(int\|string $valor)` | Detecta el formato: número, CURP, abreviatura o nombre | `Estado` |
 | `->intentarDesde(int\|string $valor)` | Igual que `desde()` pero sin lanzar | `?Estado` |
@@ -475,7 +521,8 @@ Alias en inglés: `fromNumber()`, `fromAbbr()`, `fromName()`.
 | `->toNumero()` | `int` (clave del INEGI) |
 | `->toNumeroFormateado()` | `string` (dos dígitos: `'09'`) |
 | `->toCurp()` | `string` (código de las posiciones 11-12) |
-| `->toAbreviatura()` | `string` |
+| `->toAbreviatura()` | `string` (uso común, **largo variable**: 2 a 5) |
+| `->toIso()` | `string` (ISO 3166-2:MX, **siempre 3**, más `NE`) |
 | `->toNombre()` | `string` |
 | `->esExtranjero()` | `bool` |
 | `->equals(Estado $otro)` | `bool` |
@@ -547,7 +594,7 @@ php test_estados.php  # solo Estados
 
 `test_persona.php` trae unas 145 aserciones sobre la lógica de pegamento, la normalización, los formatos de salida y la derivación de CURP, incluidas nueve CURP reales verificadas contra prefijo, consonantes internas y dígito verificador.
 
-`test_estados.php` trae unas 217 sobre el catálogo completo (las 33 entidades resueltas por sus cuatro identificadores, en ida y vuelta), los alias, los nombres oficiales, la resiliencia de entrada, la detección de CURP por forma y la congruencia del value object con `Persona`.
+`test_estados.php` trae unas 290 sobre el catálogo completo (las 33 entidades resueltas por sus cinco identificadores, en ida y vuelta), los alias, los nombres oficiales, los códigos ISO, la resiliencia de entrada, la detección de CURP por forma y la congruencia del value object con `Persona`.
 
 Cualquiera de los tres sale con código 1 si algo falla, así que sirven tal cual en CI.
 

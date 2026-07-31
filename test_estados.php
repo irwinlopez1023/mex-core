@@ -191,11 +191,14 @@ check('[objeto] toNumeroFormateado de dos digitos', '24', MexCore::Estado()->fro
 check('[objeto] esExtranjero falso', false, $cdmx->esExtranjero());
 check('[objeto] esExtranjero verdadero', true, MexCore::Estado()->fromNumero(33)->esExtranjero());
 
+check('[objeto] toIso', 'CMX', $cdmx->toIso());
+
 check('[objeto] toArray', [
     'numero'      => 9,
     'nombre'      => 'Ciudad de México',
     'curp'        => 'DF',
     'abreviatura' => 'CDMX',
+    'iso'         => 'CMX',
 ], $cdmx->toArray());
 
 check('[objeto] equals por identidad de datos', true, $cdmx->equals(MexCore::Estado()->fromCurp('DF')));
@@ -204,9 +207,52 @@ check('[objeto] equals por otra via de entrada', true, MexCore::Estado()->fromAb
 
 check(
     '[objeto] json',
-    '{"numero":1,"nombre":"Aguascalientes","curp":"AS","abreviatura":"AGS"}',
+    '{"numero":1,"nombre":"Aguascalientes","curp":"AS","abreviatura":"AGS","iso":"AGU"}',
     json_encode(MexCore::Estado()->fromNumero(1))
 );
+
+// --- 10b. Codigo ISO 3166-2:MX ---------------------------------------
+
+// La abreviatura de uso comun tiene largo variable (BC, JAL, CDMX, TAMPS),
+// asi que no sirve para las APIs que exigen un catalogo de tres letras. El
+// codigo ISO si es de largo fijo.
+$isoEsperado = [
+    1 => 'AGU', 2 => 'BCN', 3 => 'BCS', 4 => 'CAM', 5 => 'COA', 6 => 'COL',
+    7 => 'CHP', 8 => 'CHH', 9 => 'CMX', 10 => 'DUR', 11 => 'GUA', 12 => 'GRO',
+    13 => 'HID', 14 => 'JAL', 15 => 'MEX', 16 => 'MIC', 17 => 'MOR', 18 => 'NAY',
+    19 => 'NLE', 20 => 'OAX', 21 => 'PUE', 22 => 'QUE', 23 => 'ROO', 24 => 'SLP',
+    25 => 'SIN', 26 => 'SON', 27 => 'TAB', 28 => 'TAM', 29 => 'TLA', 30 => 'VER',
+    31 => 'YUC', 32 => 'ZAC', 33 => 'NE',
+];
+
+foreach ($isoEsperado as $clave => $codigo) {
+    check("[iso {$clave}] codigo", $codigo, MexCore::Estado()->fromNumero($clave)->toIso());
+    check("[iso {$clave}] ida y vuelta", $clave, MexCore::Estado()->fromIso($codigo)->toNumero());
+}
+
+// Las 32 entidades traen tres letras. El 33 no existe en la norma ISO, asi
+// que se usa NE, que es el codigo de la CURP y el que espera el catalogo.
+$isos = array_map(static fn (Estado $e): string => $e->toIso(), MexCore::Estado()->listar());
+
+check('[iso] 33 codigos unicos', 33, count(array_unique($isos)));
+check('[iso] las 32 entidades son de tres letras', 32, count(array_filter($isos, static fn (string $c): bool => strlen($c) === 3)));
+check('[iso] el extranjero es NE', 'NE', MexCore::Estado()->fromNumero(33)->toIso());
+
+// El caso que rompio en produccion: BC no es un codigo valido para la API,
+// BCN si. Antes toAbreviatura() devolvia BC y no habia forma de obtener BCN.
+check('[iso] Baja California desde CURP', 'BCN', MexCore::Estado()->fromCurp('XXXX000101HBCXXX00')->toIso());
+check('[iso] BC sigue siendo la abreviatura', 'BC', MexCore::Estado()->fromCurp('XXXX000101HBCXXX00')->toAbreviatura());
+
+// El codigo ISO tambien se acepta como entrada.
+check('[iso] fromAbreviatura acepta BCN', 2, MexCore::Estado()->fromAbreviatura('BCN')->toNumero());
+check('[iso] desde acepta BCN', 2, MexCore::Estado()->desde('BCN')->toNumero());
+check('[iso] desde acepta TAM', 28, MexCore::Estado()->desde('TAM')->toNumero());
+check('[iso] desde sigue aceptando TAMPS', 28, MexCore::Estado()->desde('TAMPS')->toNumero());
+
+// fromIso() es estricto: solo el catalogo ISO, no las formas de uso comun.
+excepcion('[iso] fromIso rechaza BC', InvalidStateException::class, static fn () => MexCore::Estado()->fromIso('BC'));
+excepcion('[iso] fromIso rechaza TAMPS', InvalidStateException::class, static fn () => MexCore::Estado()->fromIso('TAMPS'));
+excepcion('[iso] fromIso rechaza CDMX', InvalidStateException::class, static fn () => MexCore::Estado()->fromIso('CDMX'));
 
 // --- 11. Congruencia con el area de Personas -------------------------
 

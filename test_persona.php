@@ -37,6 +37,13 @@ $intocables = [
     ['JOSE DE JESUS',             ['JOSE DE JESUS', '']],
     ['JUAN CARLOS',               ['JUAN', 'CARLOS']],
     ['MARIA',                     ['MARIA', '']],
+    // Confirmado con la credencial de JUAN DE JESUS RIVAS SANCHEZ
+    // (RISJ841105HJCVNN07): es un solo nombre, no JUAN + DE JESUS.
+    ['JUAN DE JESUS',             ['JUAN DE JESUS', '']],
+    ['JUAN DE DIOS',              ['JUAN DE DIOS', '']],
+    ['MARIA DE JESUS',            ['MARIA DE JESUS', '']],
+    // Y con un nombre mas atras el bloque se cierra donde debe.
+    ['JUAN DE JESUS ALBERTO',     ['JUAN DE JESUS', 'ALBERTO']],
 ];
 
 foreach ($intocables as $caso) {
@@ -193,6 +200,7 @@ $reales = [
     // manda al siglo XX: 1909, no 2009. Prefijo, consonantes y digito
     // verificador son correctos, pero conviene confirmar la fecha real.
     ['LOID091215MCSPCM00', 'DOMINGA',          'LOPEZ',     'ICH',       'M', '1909-12-15', 'Chiapas',          true],
+    ['RISJ841105HJCVNN07', 'JUAN DE JESUS',    'RIVAS',     'SANCHEZ',   'H', '1984-11-05', 'Jalisco',          true],
 ];
 
 foreach ($reales as $r) {
@@ -205,7 +213,7 @@ foreach ($reales as $r) {
     check("[real {$curpReal}] coincide con nombres", true, $pr->coincideConCurp());
     check("[real {$curpReal}] sexo", $sexo, $pr->toSexo());
     check("[real {$curpReal}] fecha", $fechaEsperada, $pr->toFechaNacimiento()->format('Y-m-d'));
-    check("[real {$curpReal}] estado", $estadoEsperado, $pr->toEstado()->toName());
+    check("[real {$curpReal}] estado", $estadoEsperado, $pr->toEstado()->toNombre());
 
     // Apellidos invertidos: la validacion cruzada debe detectarlo.
     if ($detectable) {
@@ -253,5 +261,21 @@ check('[limite] BACA si es inconveniente', 'BXCA', Curp::prefijoDesde('ANA', 'BA
 // Apellidos identicos: la inversion es indetectable por construccion.
 $babaOk  = MexCore::Persona()->fromData('BABA940526HHGCCB07', 'ABRAHAM', 'BACA', 'BACA');
 check('[limite] apellidos identicos coinciden', true, $babaOk->coincideConCurp());
+
+// JUAN no esta en la lista de omitidos, asi que el prefijo termina en J de
+// JUAN, no en J de JESUS. Que las dos palabras empiecen con J hace que la
+// CURP no distinga, pero la consonante interna si: N de JUAN, no S de JESUS.
+check('[limite] JUAN no se omite', 'RISJ', Curp::prefijoDesde('JUAN DE JESUS', 'RIVAS', 'SANCHEZ'));
+check('[limite] consonante interna de JUAN', 'VNN', Curp::consonantesDesde('JUAN DE JESUS', 'RIVAS', 'SANCHEZ'));
+// Y con JOSE si se omite: la derivacion pasa a JESUS y la consonante a S.
+check('[limite] JOSE si se omite', 'RISJ', Curp::prefijoDesde('JOSE DE JESUS', 'RIVAS', 'SANCHEZ'));
+check('[limite] consonante interna de JESUS', 'VNS', Curp::consonantesDesde('JOSE DE JESUS', 'RIVAS', 'SANCHEZ'));
+
+// coincideConCurp() usa toNombreUnico(), que vuelve a unir los bloques, asi
+// que la segmentacion no altera la validacion cruzada.
+$juan = MexCore::Persona()->fromData('RISJ841105HJCVNN07', 'JUAN DE JESUS', 'RIVAS', 'SANCHEZ');
+check('[limite] JUAN DE JESUS es un solo bloque', ['JUAN DE JESUS'], $juan->toNombres());
+check('[limite] JUAN DE JESUS sin segundo nombre', '', $juan->toSegundoNombre());
+check('[limite] JUAN DE JESUS coincide', true, $juan->coincideConCurp());
 
 cerrarSuite();

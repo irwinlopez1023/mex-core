@@ -17,13 +17,20 @@ final class Estado implements \JsonSerializable
     private string $nombre;
     private string $curp;
     private string $abreviatura;
+    private string $iso;
 
-    public function __construct(int $id, string $nombre, string $curp, string $abreviatura)
-    {
+    public function __construct(
+        int    $id,
+        string $nombre,
+        string $curp,
+        string $abreviatura,
+        string $iso = '',
+    ) {
         $this->id           = $id;
         $this->nombre       = $nombre;
         $this->curp         = $curp;
         $this->abreviatura  = $abreviatura;
+        $this->iso          = $iso;
     }
 
     /**
@@ -43,9 +50,26 @@ final class Estado implements \JsonSerializable
         return $this->curp;
     }
 
+    /**
+     * Abreviatura de uso comun. OJO: el largo es variable, de dos a cinco
+     * letras (BC, JAL, CDMX, TAMPS). Si se necesita un codigo de largo fijo
+     * hay que usar toIso().
+     */
     public function toAbreviatura(): string
     {
         return $this->abreviatura;
+    }
+
+    /**
+     * Codigo ISO 3166-2:MX, siempre de tres letras: BCN, NLE, CMX, TAM.
+     *
+     * La norma solo cubre las 32 entidades federativas, asi que para Nacido
+     * en el Extranjero se devuelve NE, que es el codigo que usa la CURP y el
+     * que esperan los sistemas que aceptan este catalogo.
+     */
+    public function toIso(): string
+    {
+        return $this->iso;
     }
 
     public function toNombre(): string
@@ -72,7 +96,7 @@ final class Estado implements \JsonSerializable
     }
 
     /**
-     * @return array{numero: int, nombre: string, curp: string, abreviatura: string}
+     * @return array{numero: int, nombre: string, curp: string, abreviatura: string, iso: string}
      */
     public function toArray(): array
     {
@@ -81,6 +105,7 @@ final class Estado implements \JsonSerializable
             'nombre'      => $this->nombre,
             'curp'        => $this->curp,
             'abreviatura' => $this->abreviatura,
+            'iso'         => $this->iso,
         ];
     }
 

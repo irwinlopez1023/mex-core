@@ -6,40 +6,46 @@ namespace Irwinlopez1023\MexCore;
 
 final class EstadoQuery
 {
+    /**
+     * curp: posiciones 11 y 12 de la CURP.
+     * abbr: abreviatura de uso comun, de largo variable (BC, JAL, TAMPS).
+     * iso:  ISO 3166-2:MX, siempre tres letras. Para el id 33, que la norma
+     *       no cubre, se usa NE, igual que la CURP.
+     */
     private const DATA = [
-        ['id' => 1,  'curp' => 'AS', 'abbr' => 'AGS', 'name' => 'Aguascalientes'],
-        ['id' => 2,  'curp' => 'BC', 'abbr' => 'BC',  'name' => 'Baja California'],
-        ['id' => 3,  'curp' => 'BS', 'abbr' => 'BCS', 'name' => 'Baja California Sur'],
-        ['id' => 4,  'curp' => 'CC', 'abbr' => 'CAMP','name' => 'Campeche'],
-        ['id' => 5,  'curp' => 'CL', 'abbr' => 'COAH','name' => 'Coahuila'],
-        ['id' => 6,  'curp' => 'CM', 'abbr' => 'COL', 'name' => 'Colima'],
-        ['id' => 7,  'curp' => 'CS', 'abbr' => 'CHIS','name' => 'Chiapas'],
-        ['id' => 8,  'curp' => 'CH', 'abbr' => 'CHIH','name' => 'Chihuahua'],
-        ['id' => 9,  'curp' => 'DF', 'abbr' => 'CDMX','name' => 'Ciudad de México'],
-        ['id' => 10, 'curp' => 'DG', 'abbr' => 'DGO', 'name' => 'Durango'],
-        ['id' => 11, 'curp' => 'GT', 'abbr' => 'GTO', 'name' => 'Guanajuato'],
-        ['id' => 12, 'curp' => 'GR', 'abbr' => 'GRO', 'name' => 'Guerrero'],
-        ['id' => 13, 'curp' => 'HG', 'abbr' => 'HGO', 'name' => 'Hidalgo'],
-        ['id' => 14, 'curp' => 'JC', 'abbr' => 'JAL', 'name' => 'Jalisco'],
-        ['id' => 15, 'curp' => 'MS', 'abbr' => 'MEX', 'name' => 'Estado de México'],
-        ['id' => 16, 'curp' => 'MC', 'abbr' => 'MICH','name' => 'Michoacán'],
-        ['id' => 17, 'curp' => 'MN', 'abbr' => 'MOR', 'name' => 'Morelos'],
-        ['id' => 18, 'curp' => 'NT', 'abbr' => 'NAY', 'name' => 'Nayarit'],
-        ['id' => 19, 'curp' => 'NL', 'abbr' => 'NL',  'name' => 'Nuevo León'],
-        ['id' => 20, 'curp' => 'OC', 'abbr' => 'OAX', 'name' => 'Oaxaca'],
-        ['id' => 21, 'curp' => 'PL', 'abbr' => 'PUE', 'name' => 'Puebla'],
-        ['id' => 22, 'curp' => 'QT', 'abbr' => 'QRO', 'name' => 'Querétaro'],
-        ['id' => 23, 'curp' => 'QR', 'abbr' => 'QR',  'name' => 'Quintana Roo'],
-        ['id' => 24, 'curp' => 'SP', 'abbr' => 'SLP', 'name' => 'San Luis Potosí'],
-        ['id' => 25, 'curp' => 'SL', 'abbr' => 'SIN', 'name' => 'Sinaloa'],
-        ['id' => 26, 'curp' => 'SR', 'abbr' => 'SON', 'name' => 'Sonora'],
-        ['id' => 27, 'curp' => 'TC', 'abbr' => 'TAB', 'name' => 'Tabasco'],
-        ['id' => 28, 'curp' => 'TS', 'abbr' => 'TAMPS','name' => 'Tamaulipas'],
-        ['id' => 29, 'curp' => 'TL', 'abbr' => 'TLAX','name' => 'Tlaxcala'],
-        ['id' => 30, 'curp' => 'VZ', 'abbr' => 'VER', 'name' => 'Veracruz'],
-        ['id' => 31, 'curp' => 'YN', 'abbr' => 'YUC', 'name' => 'Yucatán'],
-        ['id' => 32, 'curp' => 'ZS', 'abbr' => 'ZAC', 'name' => 'Zacatecas'],
-        ['id' => 33, 'curp' => 'NE', 'abbr' => 'EXT', 'name' => 'Nacido en el Extranjero'],
+        ['id' => 1,  'curp' => 'AS', 'abbr' => 'AGS', 'iso' => 'AGU', 'name' => 'Aguascalientes'],
+        ['id' => 2,  'curp' => 'BC', 'abbr' => 'BC',  'iso' => 'BCN', 'name' => 'Baja California'],
+        ['id' => 3,  'curp' => 'BS', 'abbr' => 'BCS', 'iso' => 'BCS', 'name' => 'Baja California Sur'],
+        ['id' => 4,  'curp' => 'CC', 'abbr' => 'CAMP','iso' => 'CAM', 'name' => 'Campeche'],
+        ['id' => 5,  'curp' => 'CL', 'abbr' => 'COAH','iso' => 'COA', 'name' => 'Coahuila'],
+        ['id' => 6,  'curp' => 'CM', 'abbr' => 'COL', 'iso' => 'COL', 'name' => 'Colima'],
+        ['id' => 7,  'curp' => 'CS', 'abbr' => 'CHIS','iso' => 'CHP', 'name' => 'Chiapas'],
+        ['id' => 8,  'curp' => 'CH', 'abbr' => 'CHIH','iso' => 'CHH', 'name' => 'Chihuahua'],
+        ['id' => 9,  'curp' => 'DF', 'abbr' => 'CDMX','iso' => 'CMX', 'name' => 'Ciudad de México'],
+        ['id' => 10, 'curp' => 'DG', 'abbr' => 'DGO', 'iso' => 'DUR', 'name' => 'Durango'],
+        ['id' => 11, 'curp' => 'GT', 'abbr' => 'GTO', 'iso' => 'GUA', 'name' => 'Guanajuato'],
+        ['id' => 12, 'curp' => 'GR', 'abbr' => 'GRO', 'iso' => 'GRO', 'name' => 'Guerrero'],
+        ['id' => 13, 'curp' => 'HG', 'abbr' => 'HGO', 'iso' => 'HID', 'name' => 'Hidalgo'],
+        ['id' => 14, 'curp' => 'JC', 'abbr' => 'JAL', 'iso' => 'JAL', 'name' => 'Jalisco'],
+        ['id' => 15, 'curp' => 'MS', 'abbr' => 'MEX', 'iso' => 'MEX', 'name' => 'Estado de México'],
+        ['id' => 16, 'curp' => 'MC', 'abbr' => 'MICH','iso' => 'MIC', 'name' => 'Michoacán'],
+        ['id' => 17, 'curp' => 'MN', 'abbr' => 'MOR', 'iso' => 'MOR', 'name' => 'Morelos'],
+        ['id' => 18, 'curp' => 'NT', 'abbr' => 'NAY', 'iso' => 'NAY', 'name' => 'Nayarit'],
+        ['id' => 19, 'curp' => 'NL', 'abbr' => 'NL',  'iso' => 'NLE', 'name' => 'Nuevo León'],
+        ['id' => 20, 'curp' => 'OC', 'abbr' => 'OAX', 'iso' => 'OAX', 'name' => 'Oaxaca'],
+        ['id' => 21, 'curp' => 'PL', 'abbr' => 'PUE', 'iso' => 'PUE', 'name' => 'Puebla'],
+        ['id' => 22, 'curp' => 'QT', 'abbr' => 'QRO', 'iso' => 'QUE', 'name' => 'Querétaro'],
+        ['id' => 23, 'curp' => 'QR', 'abbr' => 'QR',  'iso' => 'ROO', 'name' => 'Quintana Roo'],
+        ['id' => 24, 'curp' => 'SP', 'abbr' => 'SLP', 'iso' => 'SLP', 'name' => 'San Luis Potosí'],
+        ['id' => 25, 'curp' => 'SL', 'abbr' => 'SIN', 'iso' => 'SIN', 'name' => 'Sinaloa'],
+        ['id' => 26, 'curp' => 'SR', 'abbr' => 'SON', 'iso' => 'SON', 'name' => 'Sonora'],
+        ['id' => 27, 'curp' => 'TC', 'abbr' => 'TAB', 'iso' => 'TAB', 'name' => 'Tabasco'],
+        ['id' => 28, 'curp' => 'TS', 'abbr' => 'TAMPS','iso' => 'TAM','name' => 'Tamaulipas'],
+        ['id' => 29, 'curp' => 'TL', 'abbr' => 'TLAX','iso' => 'TLA', 'name' => 'Tlaxcala'],
+        ['id' => 30, 'curp' => 'VZ', 'abbr' => 'VER', 'iso' => 'VER', 'name' => 'Veracruz'],
+        ['id' => 31, 'curp' => 'YN', 'abbr' => 'YUC', 'iso' => 'YUC', 'name' => 'Yucatán'],
+        ['id' => 32, 'curp' => 'ZS', 'abbr' => 'ZAC', 'iso' => 'ZAC', 'name' => 'Zacatecas'],
+        ['id' => 33, 'curp' => 'NE', 'abbr' => 'EXT', 'iso' => 'NE',  'name' => 'Nacido en el Extranjero'],
     ];
 
     /**
@@ -129,6 +135,18 @@ final class EstadoQuery
     {
         return $this->buildFromId(
             $this->resolverNombre($nombre) ?? throw new InvalidStateException($nombre)
+        );
+    }
+
+    /**
+     * Codigo ISO 3166-2:MX de tres letras, mas NE para el extranjero. A
+     * diferencia de fromAbreviatura(), no acepta las formas de uso comun:
+     * 'BC' falla aqui y 'BCN' es lo unico valido.
+     */
+    public function fromIso(string $iso): Estado
+    {
+        return $this->buildFromId(
+            $this->resolverIso($iso) ?? throw new InvalidStateException($iso)
         );
     }
 
@@ -229,25 +247,31 @@ final class EstadoQuery
         return self::getIndex()['byName'][self::normalizeName($nombre)] ?? null;
     }
 
+    private function resolverIso(string $iso): ?int
+    {
+        return self::getIndex()['byIso'][self::normalizeAbbr($iso)] ?? null;
+    }
+
     private function buildFromId(int $id): Estado
     {
         return self::construir(self::getIndex()['rows'][$id]);
     }
 
     /**
-     * @param array{id: int, curp: string, abbr: string, name: string} $fila
+     * @param array{id: int, curp: string, abbr: string, iso: string, name: string} $fila
      */
     private static function construir(array $fila): Estado
     {
-        return new Estado($fila['id'], $fila['name'], $fila['curp'], $fila['abbr']);
+        return new Estado($fila['id'], $fila['name'], $fila['curp'], $fila['abbr'], $fila['iso']);
     }
 
     /**
      * @return array{
-     *     rows: array<int, array{id: int, curp: string, abbr: string, name: string}>,
+     *     rows: array<int, array{id: int, curp: string, abbr: string, iso: string, name: string}>,
      *     byNumber: array<int, int>,
      *     byCurp: array<string, int>,
      *     byAbbr: array<string, int>,
+     *     byIso: array<string, int>,
      *     byName: array<string, int>
      * }
      */
@@ -262,6 +286,7 @@ final class EstadoQuery
             'byNumber' => [],
             'byCurp'   => [],
             'byAbbr'   => [],
+            'byIso'    => [],
             'byName'   => [],
         ];
 
@@ -275,7 +300,14 @@ final class EstadoQuery
 
             $index['byCurp'][self::normalizeCurp($fila['curp'])] = $id;
             $index['byAbbr'][self::normalizeAbbr($fila['abbr'])] = $id;
+            $index['byIso'][self::normalizeAbbr($fila['iso'])]   = $id;
             $index['byName'][self::normalizeName($fila['name'])] = $id;
+
+            // El codigo ISO tambien se acepta donde se espera una abreviatura,
+            // asi que fromAbreviatura('BCN') y desde('BCN') resuelven. No hay
+            // colision: donde el ISO coincide con la abreviatura (JAL, SLP,
+            // MOR) apuntan a la misma entidad.
+            $index['byAbbr'][self::normalizeAbbr($fila['iso'])] = $id;
         }
 
         foreach (self::NAME_ALIASES as $alias => $id) {
