@@ -192,8 +192,9 @@ $reales = [
     ['MEST591010MQTNNR15', 'MA. TERESA PABLA', 'MENDEZ',    'SANCHEZ',   'M', '1959-10-10', 'Querétaro',        true],
     ['LUHR991216MPLZRC00', 'ROCIO',            'DE LA LUZ', 'HERNANDEZ', 'M', '1999-12-16', 'Puebla',           true],
     ['PEIA620825HCSRCN02', 'ANDRES',           'PEREZ',     'ICH',       'H', '1962-08-25', 'Chiapas',          true],
-    ['TEMC930414MMCNNH05', 'CHEEL ICH',        'TENORIO',   'MENDOZA',   'M', '1993-04-14', 'Michoacán',        true],
-    ['OEAI750827MMSVRC06', 'MA. ICH-CHEL',     'OVELIZ',    'ARANDA',    'M', '1975-08-27', 'Estado de México', true],
+    // MC es Mexico y MS es Morelos, no al reves. Ver la nota en EstadoQuery.
+    ['TEMC930414MMCNNH05', 'CHEEL ICH',        'TENORIO',   'MENDOZA',   'M', '1993-04-14', 'Estado de México', true],
+    ['OEAI750827MMSVRC06', 'MA. ICH-CHEL',     'OVELIZ',    'ARANDA',    'M', '1975-08-27', 'Morelos',          true],
     ['BABA940526HHGCCB07', 'ABRAHAM',          'BACA',      'BACA',      'H', '1994-05-26', 'Hidalgo',          false],
     ['VEBS940210MCHGCH04', 'SAHIRA YANIRA',    'VEGA',      'BACA',      'M', '1994-02-10', 'Chihuahua',        true],
     // OJO: el homoclave de esta CURP es '0', un digito, asi que la norma la

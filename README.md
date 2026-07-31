@@ -441,9 +441,9 @@ Las tres reglas del instructivo están implementadas: se descartan las partícul
 | 12 | GR | GRO | GRO | Guerrero |
 | 13 | HG | HGO | HID | Hidalgo |
 | 14 | JC | JAL | JAL | Jalisco |
-| 15 | MS | MEX | MEX | Estado de México |
-| 16 | MC | MICH | MIC | Michoacán |
-| 17 | MN | MOR | MOR | Morelos |
+| 15 | MC | MEX | MEX | Estado de México |
+| 16 | MN | MICH | MIC | Michoacán |
+| 17 | MS | MOR | MOR | Morelos |
 | 18 | NT | NAY | NAY | Nayarit |
 | 19 | NL | NL | NLE | Nuevo León |
 | 20 | OC | OAX | OAX | Oaxaca |
@@ -462,6 +462,10 @@ Las tres reglas del instructivo están implementadas: se descartan las partícul
 | 33 | NE | EXT | NE | Nacido en el Extranjero |
 
 La clave es la del INEGI. El código de la CURP de la capital sigue siendo `DF`, aunque la entidad se llame Ciudad de México desde 2016. La columna ISO es [ISO 3166-2:MX](https://en.wikipedia.org/wiki/ISO_3166-2:MX), sin el prefijo `MX-`.
+
+Cuidado con las tres claves que empiezan con M: no siguen ningún patrón mnemotécnico y es fácil rotarlas. `MC` es **M**éxi**c**o, `MN` es Michoacá**n** y `MS` es Morel**os**.
+
+Querétaro es `QT` en las CURP reales; varios catálogos públicos la listan como `QO`, que se acepta de entrada pero no es la que devuelve `toCurp()`.
 
 ---
 

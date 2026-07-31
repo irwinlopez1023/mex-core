@@ -27,9 +27,12 @@ final class EstadoQuery
         ['id' => 12, 'curp' => 'GR', 'abbr' => 'GRO', 'iso' => 'GRO', 'name' => 'Guerrero'],
         ['id' => 13, 'curp' => 'HG', 'abbr' => 'HGO', 'iso' => 'HID', 'name' => 'Hidalgo'],
         ['id' => 14, 'curp' => 'JC', 'abbr' => 'JAL', 'iso' => 'JAL', 'name' => 'Jalisco'],
-        ['id' => 15, 'curp' => 'MS', 'abbr' => 'MEX', 'iso' => 'MEX', 'name' => 'Estado de México'],
-        ['id' => 16, 'curp' => 'MC', 'abbr' => 'MICH','iso' => 'MIC', 'name' => 'Michoacán'],
-        ['id' => 17, 'curp' => 'MN', 'abbr' => 'MOR', 'iso' => 'MOR', 'name' => 'Morelos'],
+        // OJO: las tres claves que empiezan con M son la trampa clasica del
+        // catalogo de RENAPO. MC es Mexico, MN es MichoacaN y MS es MorelOS.
+        // No siguen ningun patron mnemotecnico y es facil rotarlas.
+        ['id' => 15, 'curp' => 'MC', 'abbr' => 'MEX', 'iso' => 'MEX', 'name' => 'Estado de México'],
+        ['id' => 16, 'curp' => 'MN', 'abbr' => 'MICH','iso' => 'MIC', 'name' => 'Michoacán'],
+        ['id' => 17, 'curp' => 'MS', 'abbr' => 'MOR', 'iso' => 'MOR', 'name' => 'Morelos'],
         ['id' => 18, 'curp' => 'NT', 'abbr' => 'NAY', 'iso' => 'NAY', 'name' => 'Nayarit'],
         ['id' => 19, 'curp' => 'NL', 'abbr' => 'NL',  'iso' => 'NLE', 'name' => 'Nuevo León'],
         ['id' => 20, 'curp' => 'OC', 'abbr' => 'OAX', 'iso' => 'OAX', 'name' => 'Oaxaca'],
@@ -80,6 +83,11 @@ final class EstadoQuery
      */
     private const CURP_ALIASES = [
         'DF' => 9,
+
+        // Queretaro aparece como QT en las CURP reales, pero varios catalogos
+        // publicos la listan como QO. Se acepta la segunda de entrada; la
+        // canonica que devuelve toCurp() sigue siendo QT.
+        'QO' => 22,
     ];
 
     /**

@@ -55,6 +55,41 @@ foreach ($catalogo as $e) {
     check("[ida y vuelta {$n}] por nombre", $n, MexCore::Estado()->fromNombre($e->toNombre())->toNumero());
 }
 
+// --- 1b. Claves de CURP que se prestan a confusion --------------------
+
+// Las tres claves con M estuvieron rotadas en el catalogo hasta que un dato
+// real lo delato. No siguen patron mnemotecnico, asi que se fijan una por una
+// contra el catalogo de RENAPO en las dos direcciones.
+$clavesCurp = [
+    'AS' => 'Aguascalientes',     'BC' => 'Baja California', 'BS' => 'Baja California Sur',
+    'CC' => 'Campeche',           'CL' => 'Coahuila',        'CM' => 'Colima',
+    'CS' => 'Chiapas',            'CH' => 'Chihuahua',       'DF' => 'Ciudad de México',
+    'DG' => 'Durango',            'GT' => 'Guanajuato',      'GR' => 'Guerrero',
+    'HG' => 'Hidalgo',            'JC' => 'Jalisco',         'MC' => 'Estado de México',
+    'MN' => 'Michoacán',          'MS' => 'Morelos',         'NT' => 'Nayarit',
+    'NL' => 'Nuevo León',         'OC' => 'Oaxaca',          'PL' => 'Puebla',
+    'QT' => 'Querétaro',          'QR' => 'Quintana Roo',    'SP' => 'San Luis Potosí',
+    'SL' => 'Sinaloa',            'SR' => 'Sonora',          'TC' => 'Tabasco',
+    'TS' => 'Tamaulipas',         'TL' => 'Tlaxcala',        'VZ' => 'Veracruz',
+    'YN' => 'Yucatán',            'ZS' => 'Zacatecas',       'NE' => 'Nacido en el Extranjero',
+];
+
+check('[claves] son 33', 33, count($clavesCurp));
+
+foreach ($clavesCurp as $clave => $nombreEsperado) {
+    check("[clave {$clave}] resuelve", $nombreEsperado, MexCore::Estado()->fromCurp($clave)->toNombre());
+    check("[clave {$clave}] es la canonica", $clave, MexCore::Estado()->fromNombre($nombreEsperado)->toCurp());
+}
+
+// El error concreto que estuvo en produccion: las tres estaban rotadas.
+check('[clave] MC no es Michoacán', 'Estado de México', MexCore::Estado()->fromCurp('MC')->toNombre());
+check('[clave] MN no es Morelos',   'Michoacán',        MexCore::Estado()->fromCurp('MN')->toNombre());
+check('[clave] MS no es México',    'Morelos',          MexCore::Estado()->fromCurp('MS')->toNombre());
+
+// Queretaro: QT es la canonica, QO se acepta de entrada.
+check('[clave] QO es alias de Querétaro', 22, MexCore::Estado()->fromCurp('QO')->toNumero());
+check('[clave] la canonica sigue siendo QT', 'QT', MexCore::Estado()->fromCurp('QO')->toCurp());
+
 // --- 2. Named constructors -------------------------------------------
 
 check('[from] curp completa', 'San Luis Potosí', MexCore::Estado()->fromCurp('VARG740228HSPLSN07')->toNombre());
